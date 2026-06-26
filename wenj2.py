@@ -23,8 +23,8 @@ if sn_file is not None and target_file is not None:
     # 清洗字段首尾空格，防止匹配失效
     df_sn["三方单号"] = df_sn["三方单号"].str.strip()
     df_sn["sku id"] = df_sn["sku id"].str.strip()
-    df_sn["sn"] = df_sn["sn"].str.strip()
-    df_target["京东订单号不要重复除非多单号"] = df_target["京东订单号不要重复除非多单号"].str.strip()
+    df_sn["sn"] = df_sn["sn"].str.replace(r"\s+", "", regex=True)
+    df_target["京东订单号不要重复除非多单号"] = df_target["京东订单号不要重复除非多单号"].str.replace(r"\s+", "", regex=True)
     
 
     # 2、构建 订单号+SKU 对应SN的字典
@@ -35,7 +35,7 @@ if sn_file is not None and target_file is not None:
         order_id = row["三方单号"]
         sku = row["sku id"]
         sn = row["sn"]
-        key = (order_id, sku)
+        key = (order_id)
         if key not in sn_mapping:
             sn_mapping[key] = []
         sn_mapping[key].append((sku, sn))
@@ -62,9 +62,15 @@ if sn_file is not None and target_file is not None:
         elif sn_count == 2:
             # 2条SN：数字排序，大数放G，小数放H
             def sort_key(x):
-                if str(x[0]).isdigit():
-                    return int(x[0])
-                return 0
+                # 先判断是否为空字符串，长度为0直接返回空排序值
+                if not x or len(x) == 0:
+                    return ""
+                # 长度大于0才取第一位
+                first_char = x[0]
+                if first_char.isdigit():
+                    return int(first_char)
+                else:
+                    return first_char 
             data_sorted = sorted(sn_only, key=sort_key)
             sn_small = data_sorted[0]
             sn_big = data_sorted[1]
@@ -77,15 +83,15 @@ if sn_file is not None and target_file is not None:
 
     # 批量回填G、H两列
     res = df_target.apply(lambda r: pd.Series(fill_two_sn_cols(r)), axis=1)
-    df_target["SN码=内机无SN的备注清楚原因【售后填】"] = res[0]
-    df_target["SN码=外机无SN的备注清楚原因【售后填】"] = res[1]
+    df_target["SN码=外机无SN的备注清楚原因【售后填】"] = res[0]
+    df_target["SN码=内机无SN的备注清楚原因【售后填】"] = res[1]
     # 本地调试打印匹配明细
-    print("======所有匹配成功SN明细======")
-    if len(success_pair_list) == 0:
-        print("暂无匹配成功数据")
-    else:
-        for idx, pair in enumerate(success_pair_list, start=1):
-            print(f"第{idx}组配对：{pair}")
+    # print("======所有匹配成功SN明细======")
+    # if len(success_pair_list) == 0:
+    #     print("暂无匹配成功数据")
+    # else:
+    #     for idx, pair in enumerate(success_pair_list, start=1):
+    #         print(f"第{idx}组配对：{pair}")
     # 4. 生成下载文件，全程文本无科学计数
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
