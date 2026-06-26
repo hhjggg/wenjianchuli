@@ -15,8 +15,8 @@ if sn_file is not None and target_file is not None:
 
     # 1、读取两份表格，全部强制为字符串，杜绝科学计数法
     # 替换换行符、删除空格，统一干净列名
-    df_sn = pd.read_excel(sn_file, dtype=str)
-    df_target = pd.read_excel(target_file, dtype=str)
+    df_sn = pd.read_excel(sn_file, dtype=str).fillna("")
+    df_target = pd.read_excel(target_file, dtype=str).fillna("")
     df_sn.columns = [col.replace("\n", "").strip() for col in df_sn.columns]
     df_target.columns = [col.replace("\n", "").strip() for col in df_target.columns]
 
