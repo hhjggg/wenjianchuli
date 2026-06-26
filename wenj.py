@@ -18,13 +18,10 @@ if sn_file is not None and target_file is not None:
     df_target = pd.read_excel(target_file)
     st.success("文件读取完成，开始处理数据！")
 
-        # ===================== 文件路径 =====================
-    PATH_TARGET = "订单号和写入.xlsx"    # 待回填目标表
-    PATH_SN_SOURCE = "sn数据来源.xlsx"# SN数据源表
-    # ==================================================
+
 
     # 1、构建带订单号+sku+sn的完整字典
-    wb_sn_source = load_workbook(PATH_SN_SOURCE)
+    wb_sn_source = load_workbook(sn_file)
     ws_sn_source = wb_sn_source.active
     sn_mapping = {}
     over_three_sn_order = []
@@ -66,7 +63,7 @@ if sn_file is not None and target_file is not None:
 
     success_pair_list = []
     # 2、遍历目标表回填G/H列
-    wb_target = load_workbook(PATH_TARGET)
+    wb_target = load_workbook(target_file)
     ws_target = wb_target.active
 
     for row in range(2, ws_target.max_row + 1):
