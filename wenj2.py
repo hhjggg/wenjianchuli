@@ -79,7 +79,13 @@ if sn_file is not None and target_file is not None:
     res = df_target.apply(lambda r: pd.Series(fill_two_sn_cols(r)), axis=1)
     df_target["SN码=内机无SN的备注清楚原因【售后填】"] = res[0]
     df_target["SN码=外机无SN的备注清楚原因【售后填】"] = res[1]
-
+    # 本地调试打印匹配明细
+    print("======所有匹配成功SN明细======")
+    if len(success_pair_list) == 0:
+        print("暂无匹配成功数据")
+    else:
+        for idx, pair in enumerate(success_pair_list, start=1):
+            print(f"第{idx}组配对：{pair}")
     # 4. 生成下载文件，全程文本无科学计数
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
