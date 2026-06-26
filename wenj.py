@@ -20,8 +20,12 @@ if sn_file is not None and target_file is not None:
 
 
 
-    # 1、构建带订单号+sku+sn的完整字典
-    wb_sn_source = load_workbook(sn_file)
+    # 先pandas读入强制文本，再转成openpyxl工作簿
+    temp_io = BytesIO()
+    df_temp = pd.read_excel(sn_file, dtype=str)
+    df_temp.to_excel(temp_io, index=False)
+    temp_io.seek(0)
+    wb_sn_source = load_workbook(temp_io)
     ws_sn_source = wb_sn_source.active
     sn_mapping = {}
     over_three_sn_order = []
@@ -48,8 +52,14 @@ if sn_file is not None and target_file is not None:
 
 
     success_pair_list = []
-    # 2、遍历目标表回填G/H列
-    wb_target = load_workbook(target_file)
+    
+    # 先用pandas强制全列文本读取，消除科学计数
+    temp_buf = BytesIO()
+    df_temp = pd.read_excel(target_file, dtype=str)
+    df_temp.to_excel(temp_buf, index=False)
+    temp_buf.seek(0)
+    # 再交给openpyxl，你后面ws_target操作全部保留不变
+    wb_target = load_workbook(temp_buf)
     ws_target = wb_target.active
 
     for row in range(2, ws_target.max_row + 1):
@@ -74,15 +84,7 @@ if sn_file is not None and target_file is not None:
             _, sn_big = data_sorted[1]
             ws_target.cell(row=row, column=7, value=sn_big)
             ws_target.cell(row=row, column=8, value=sn_small)
-        #elif sn_count == 3:
-        #    data_two = data_list[:2]
-        #    data_sorted = sorted(data_two, key=lambda x: int(x[0]) if str(x[0]).isdigit() else 0)
-        #    _, sn_small = data_sorted[0]
-        #   _, sn_big = data_sorted[1]
-        #    ws_target.cell(row=row, column=7, value=sn_big)
-        #   ws_target.cell(row=row, column=8, value=sn_small)
         elif sn_count >= 3:
-            # SN数量≥3：SN条数数字填入G内机，H外机空
             ws_target.cell(row=row, column=7, value=sn_count)
             continue
 
