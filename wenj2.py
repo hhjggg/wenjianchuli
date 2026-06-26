@@ -54,7 +54,7 @@ if sn_file is not None and target_file is not None:
         success_pair_list.extend(data_list)
         sn_count = len(data_list)
         # 提取所有SN
-        sn_only = [item[1] for item in data_list]
+        sn_only = new_func(data_list)
 
         if sn_count == 1:
             # 仅1条SN：G填SN，H空
@@ -80,6 +80,10 @@ if sn_file is not None and target_file is not None:
             return str(sn_count), None
         else:
             return None, None
+    
+    def new_func(data_list):
+        sn_only = [item[1] for item in data_list]
+        return sn_only            
 
     # 批量回填G、H两列
     res = df_target.apply(lambda r: pd.Series(fill_two_sn_cols(r)), axis=1)
