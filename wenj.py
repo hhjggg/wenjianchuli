@@ -44,21 +44,7 @@ if sn_file is not None and target_file is not None:
 
     wb_sn_source.close()
 
-        #print("==================== 完整订单-SKU-SN字典数据 ====================")
-        # 循环遍历字典每一条订单
-        #for order_num, sku_sn_list in sn_mapping.items():
-        #    print(f"订单号：{order_num} ｜ 对应SKU+SN列表：{sku_sn_list}")
-        #print("================================================================\n")
 
-    # ---------------------- 输出2：打印有效SN数量≥3的订单号 ----------------------
-    print("==================== SN数量≥3的订单号清单 ====================")
-    if len(over_three_sn_order) == 0:
-        print("不存在有效SN数量大于等于3条的订单")
-    else:
-        for idx, order in enumerate(over_three_sn_order, start=1):
-            print(f"{idx}. 订单号：{order}，有效SN条数：{len(sn_mapping[order])}")
-    print(f"合计SN≥3条的订单总数：{len(over_three_sn_order)}")
-    print("================================================================\n")
 
 
     success_pair_list = []
@@ -100,18 +86,8 @@ if sn_file is not None and target_file is not None:
             ws_target.cell(row=row, column=7, value=sn_count)
             continue
 
-    wb_target.save(PATH_TARGET)
-    wb_target.close()
-    print("处理完成！")
 
 
-    # ---------------------- 输出2：打印所有配对成功的(sku,SN)元组 ----------------------
-    print("==================== 所有匹配成功的(sku, SN)元组明细 ====================")
-    if len(success_pair_list) == 0:
-        print("暂无匹配成功的SKU-SN配对数据")
-    else:
-        for idx, pair in enumerate(success_pair_list, start=1):
-            print(f"第{idx}组配对：{pair}")
 
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
