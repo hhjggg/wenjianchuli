@@ -19,10 +19,10 @@ if sn_file is not None and target_file is not None:
 
     # 清洗字段首尾空格，防止匹配失效
     df_sn["订单号"] = df_sn["订单号"].str.strip()
-    df_sn["SKU"] = df_sn["SKU"].str.strip()
-    df_sn["SN"] = df_sn["SN"].str.strip()
+    df_sn["sku id"] = df_sn["sku id"].str.strip()
+    df_sn["sn"] = df_sn["sn"].str.strip()
     df_target["订单号"] = df_target["订单号"].str.strip()
-    df_target["SKU"] = df_target["SKU"].str.strip()
+    df_target["sku id"] = df_target["sku id"].str.strip()
 
     # 2、构建 订单号+SKU 对应SN的字典
     sn_mapping = {}
@@ -30,8 +30,8 @@ if sn_file is not None and target_file is not None:
 
     for _, row in df_sn.iterrows():
         order_id = row["订单号"]
-        sku = row["SKU"]
-        sn = row["SN"]
+        sku = row["sku id"]
+        sn = row["sn"]
         key = (order_id, sku)
         if key not in sn_mapping:
             sn_mapping[key] = []
@@ -42,13 +42,13 @@ if sn_file is not None and target_file is not None:
 
     # 3、给目标表回填SN
     def get_sn_text(row):
-        k = (row["订单号"], row["SKU"])
+        k = (row["订单号"], row["sku id"])
         if k in sn_mapping:
             return ",".join(sn_mapping[k])
         else:
             return "SN未出，需补齐"
 
-    df_target["SN"] = df_target.apply(get_sn_text, axis=1)
+    df_target["sn"] = df_target.apply(get_sn_text, axis=1)
 
     # 打印匹配信息（网页看不到print，仅本地调试）
     success_pair_list = [k for k, v in sn_mapping.items() if len(v) > 0]
