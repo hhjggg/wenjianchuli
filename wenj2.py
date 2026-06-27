@@ -8,8 +8,8 @@ st.title("订单SN数据回填工具")
 st.subheader("请上传两份Excel文件")
 
 # 文件上传组件
-sn_file = st.file_uploader("① 上传SN数据源表", type=["xlsx"])
-target_file = st.file_uploader("② 上传待回填目标表", type=["xlsx"])
+sn_file = st.file_uploader("① 上传售后平台下载数据源表", type=["xlsx"])
+target_file = st.file_uploader("② 上传目标表", type=["xlsx"])
 if sn_file is not None and target_file is not None:
     st.success("文件读取完成，开始处理数据！")
 
