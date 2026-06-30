@@ -65,16 +65,11 @@ if sn_file is not None and target_file is not None:
                 # 先判断是否为空字符串，长度为0直接返回空排序值
                 if not x or len(x) == 0:
                     return ("", 0)
-                # 分离数字与字符，完整数字转整数排序，修复仅判断首位的缺陷
-                num_part = ""
-                char_part = ""
-                for c in x:
-                    if c.isdigit():
-                        num_part += c
+                first_char = x[0]
+                    if first_char.isdigit():
+                        return int(first_char)
                     else:
-                        char_part += c
-                num_val = int(num_part) if num_part else 0
-                return (char_part, num_val)
+                        return first_char 
             data_sorted = sorted(sn_only, key=sort_key)
             sn_small = data_sorted[0]
             sn_big = data_sorted[1]
