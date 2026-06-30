@@ -65,7 +65,7 @@ if sn_file is not None and target_file is not None:
                 # 先判断是否为空字符串，长度为0直接返回空排序值
                 if not x or len(x) == 0:
                     return ("", 0)
-                first_char = x[0]
+                    first_char = x[0]
                     if first_char.isdigit():
                         return int(first_char)
                     else:
