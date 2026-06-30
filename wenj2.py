@@ -67,7 +67,7 @@ if sn_file is not None and target_file is not None:
                     return ("", 0)
                     first_char = x[0]
                     if first_char.isdigit():
-                        return int(first_char)
+                        return first_char
                     else:
                         return first_char 
             data_sorted = sorted(sn_only, key=sort_key)
