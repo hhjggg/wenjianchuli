@@ -70,6 +70,7 @@ if sn_file is not None and target_file is not None:
                         return first_char
                     else:
                         return first_char 
+            print("原始sn_only内容：", sn_only, type(sn_only[0]), type(sn_only[1]))
             data_sorted = sorted(sn_only, key=sort_key)
             sn_small = data_sorted[0]
             sn_big = data_sorted[1]
