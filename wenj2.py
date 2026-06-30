@@ -42,50 +42,50 @@ if sn_file is not None and target_file is not None:
  # 3. 新增两列对应原G、H列，初始置空
     df_target["SN码=内机无SN的备注清楚原因【售后填】"] = None
     df_target["SN码=外机无SN的备注清楚原因【售后填】"] = None
+    
+    # 工具函数：直接返回sku+sn配对列表
+    def get_sku_sn_pairs(data_list):
+        return data_list
 
-    # 遍历目标表每一行，复刻原openpyxl回填逻辑
+    # 单行数据处理核心函数
     def fill_two_sn_cols(row):
         current_key = row["京东订单号不要重复除非多单号"]
-        # 订单不存在映射，直接返回空
+        # 订单无匹配数据，返回双空
         if current_key not in sn_mapping:
             return ["", ""]
 
         data_list = sn_mapping[current_key]
-        success_pair_list.extend(data_list)
         sn_count = len(data_list)
-        # 提取所有SN
-        sn_only = new_func(data_list)
+        pair_list = get_sku_sn_pairs(data_list)
+        # 提取纯SN列表，用于单条/多条计数场景
+        sn_only = [pair[1] for pair in pair_list]
 
         if sn_count == 1:
-            # 仅1条SN：G填SN，H空
-            return [sn_only[0], ""]
+            # 仅1组SKU+SN：外机填SN，内机空
+            return ["", sn_only[0]]
         elif sn_count == 2:
-            # 2条SN：数字排序，大数放G，小数放H
-            def sort_key(x):
-                # 先判断是否为空字符串，长度为0直接返回空排序值
-                if not x or len(x) == 0:
-                    return ("", 0)
-                    first_char = x[0]
-                    if first_char.isdigit():
-                        return first_char
-                    else:
-                        return first_char 
-            print("原始sn_only内容：", sn_only, type(sn_only[0]), type(sn_only[1]))
-            data_sorted = sorted(sn_only, key=sort_key)
-            sn_small = data_sorted[0]
-            sn_big = data_sorted[1]
-            return sn_big, sn_small
+            # 两组纯数字SKU，按数字大小升序排序
+            def sort_key(pair):
+                sku_raw = str(pair[0]).strip()
+                # 空SKU默认数字0，排最前面
+                if not sku_raw or not sku_raw.isdigit():
+                    return 0
+                # SKU纯数字，直接转整数排序
+                return int(sku_raw)
+
+            # 按SKU数字升序排序配对
+            sorted_pairs = sorted(pair_list, key=sort_key)
+            # 升序后：靠前=SKU更小(内机)，靠后=SKU更大(外机)
+            sn_outer = sorted_pairs[0][1]
+            sn_inner = sorted_pairs[1][1]
+            return [sn_outer, sn_inner]
         elif sn_count >= 3:
-            # 3条及以上：G填数量，H空
+            # 3组及以上SN：外机列填写数量，内机空
             return [str(sn_count), ""]
         else:
             return ["", ""]
-    
-    def new_func(data_list):
-        sn_only = [item[1] for item in data_list]
-        return sn_only            
 
-    # 批量回填G、H两列
+    # 批量回填两列SN
     res = df_target.apply(lambda r: pd.Series(fill_two_sn_cols(r)), axis=1)
     df_target["SN码=外机无SN的备注清楚原因【售后填】"] = res[0]
     df_target["SN码=内机无SN的备注清楚原因【售后填】"] = res[1]
