@@ -80,8 +80,15 @@ if sn_file is not None and target_file is not None:
             sn_inner = sorted_pairs[1][1]
             return [sn_outer, sn_inner]
         elif sn_count >= 3:
-            # 3组及以上SN：外机列填写数量，内机空
-            return [str(sn_count), ""]
+            # 过滤空SN，只统计有效SN
+            valid_sn_list = [sn for sn in sn_only if sn.strip() != ""]
+            valid_cnt = len(valid_sn_list)
+            if valid_cnt == 0:
+                # 全部SN为空，返回双空
+                return ["", ""]
+            else:
+                # 存在有效SN，外机列填有效数量，内机空
+                return [str(valid_cnt), ""]
         else:
             return ["", ""]
 
