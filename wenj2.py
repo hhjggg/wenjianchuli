@@ -48,7 +48,7 @@ if sn_file is not None and target_file is not None:
         current_key = row["京东订单号不要重复除非多单号"]
         # 订单不存在映射，直接返回空
         if current_key not in sn_mapping:
-            return None, None
+            return ["", ""]
 
         data_list = sn_mapping[current_key]
         success_pair_list.extend(data_list)
@@ -58,28 +58,32 @@ if sn_file is not None and target_file is not None:
 
         if sn_count == 1:
             # 仅1条SN：G填SN，H空
-            return sn_only[0], None
+            return [sn_only[0], ""]
         elif sn_count == 2:
             # 2条SN：数字排序，大数放G，小数放H
             def sort_key(x):
                 # 先判断是否为空字符串，长度为0直接返回空排序值
                 if not x or len(x) == 0:
-                    return ""
-                # 长度大于0才取第一位
-                first_char = x[0]
-                if first_char.isdigit():
-                    return int(first_char)
-                else:
-                    return first_char 
+                    return ("", 0)
+                # 分离数字与字符，完整数字转整数排序，修复仅判断首位的缺陷
+                num_part = ""
+                char_part = ""
+                for c in x:
+                    if c.isdigit():
+                        num_part += c
+                    else:
+                        char_part += c
+                num_val = int(num_part) if num_part else 0
+                return (char_part, num_val)
             data_sorted = sorted(sn_only, key=sort_key)
             sn_small = data_sorted[0]
             sn_big = data_sorted[1]
             return sn_big, sn_small
         elif sn_count >= 3:
             # 3条及以上：G填数量，H空
-            return str(sn_count), None
+            return [str(sn_count), ""]
         else:
-            return None, None
+            return ["", ""]
     
     def new_func(data_list):
         sn_only = [item[1] for item in data_list]
