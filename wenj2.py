@@ -26,6 +26,11 @@ if sn_file is not None and target_file is not None:
     df_sn["sn"] = df_sn["sn"].str.replace(r"\s+", "", regex=True)
     df_target["京东订单号不要重复除非多单号"] = df_target["京东订单号不要重复除非多单号"].str.replace(r"\s+", "", regex=True)
     
+    # 判断是否存在商品名称列，不存在就标记False
+    has_goods_col = "商品名称" in df_sn.columns
+    if has_goods_col:
+        df_sn["商品名称"] = df_sn["商品名称"].str.replace(r"\s+", "", regex=True)
+
 
     # 2、构建 订单号+SKU 对应SN的字典
     sn_mapping = {}
@@ -35,13 +40,18 @@ if sn_file is not None and target_file is not None:
         order_id = row["三方单号"]
         sku = row["sku id"]
         sn = row["sn"]
+        # 没有商品名称列就赋值为空字符串
+        if has_goods_col:
+            goods_name = row["商品名称"]
+        else:
+            goods_name = "kong"
         key = (order_id)
         if key not in sn_mapping:
             sn_mapping[key] = []
-        sn_mapping[key].append((sku, sn))
+        sn_mapping[key].append((sku,goods_name,sn))
  # 3. 新增两列对应原G、H列，初始置空
-    df_target["SN码=内机无SN的备注清楚原因【售后填】"] = None
-    df_target["SN码=外机无SN的备注清楚原因【售后填】"] = None
+    # df_target["SN码=内机无SN的备注清楚原因【售后填】"] = None
+    # df_target["SN码=外机无SN的备注清楚原因【售后填】"] = None
     
     # 工具函数：直接返回sku+sn配对列表
     def get_sku_sn_pairs(data_list):
@@ -52,17 +62,33 @@ if sn_file is not None and target_file is not None:
         current_key = row["京东订单号不要重复除非多单号"]
         # 订单无匹配数据，返回双空
         if current_key not in sn_mapping:
-            return ["", ""]
+            return ["", "SN未出，需跟进"]
 
         data_list = sn_mapping[current_key]
         sn_count = len(data_list)
-        pair_list = get_sku_sn_pairs(data_list)
         # 提取纯SN列表，用于单条/多条计数场景
-        sn_only = [pair[1] for pair in pair_list]
+        sn_only = [item[2] for item in data_list]
+        valid_sn_list = [sn for sn in sn_only if sn.strip() != ""]
 
-        if sn_count == 1:
-            # 仅1组SKU+SN：外机填SN，内机空
-            return ["", sn_only[0]]
+        if len(valid_sn_list) == 0:
+            return ["", "SN未出，需跟进"]
+
+        # 情况3：整个订单仅存在1个有效SN，优先按商品名称匹配内外机（优先级最高）
+        if len(valid_sn_list) == 1:
+            # 筛选出唯一那条带有有效SN的数据行
+            valid_items = next(item for item in data_list if item[2].strip() != "")
+
+            sku_name, goods_name, single_sn = valid_items
+
+            # 规则：商品名称非空 + 包含空调+室内机/室外机，才执行智能匹配
+            if goods_name != "" and "空调" in goods_name:
+                if "室内机" in goods_name:
+                    return ["缺失室外机sn", single_sn]
+                elif "室外机" in goods_name:
+                    return [single_sn, "缺失室内机sn"]
+            # 其余所有情况：商品名称为空 / 字段不全，回归原有旧逻辑（外机空，SN放内机）
+            return ["", single_sn]
+        
         elif sn_count == 2:
             # 两组纯数字SKU，按数字大小升序排序
             def sort_key(pair):
@@ -74,10 +100,10 @@ if sn_file is not None and target_file is not None:
                 return int(sku_raw)
 
             # 按SKU数字升序排序配对
-            sorted_pairs = sorted(pair_list, key=sort_key)
+            sorted_pairs = sorted(data_list, key=sort_key)
             # 升序后：靠前=SKU更小(内机)，靠后=SKU更大(外机)
-            sn_outer = sorted_pairs[0][1]
-            sn_inner = sorted_pairs[1][1]
+            sn_outer = sorted_pairs[0][2]
+            sn_inner = sorted_pairs[1][2]
             return [sn_outer, sn_inner]
         elif sn_count >= 3:
             # 过滤空SN，只统计有效SN
